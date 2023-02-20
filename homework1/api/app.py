@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = "ThisIsMySecret"
 
 
-CORS(app, origins=['http://localhost:3000'])
+CORS(app, origins=['http://localhost:3001'])
 
 # Configure MySQL
 app.config['MYSQL_DATABASE_USER'] = 'root'
@@ -19,7 +19,7 @@ app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql = MySQL(app)
 
 # Configure the OpenAI API key
-openai.api_key = "your_openai_api_key"
+openai.api_key = "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"
 
 
 @app.route('/')
@@ -70,24 +70,45 @@ def login():
 
     # TODO: Add code here to check the username and password against the database
     # Return error if it doesn't match
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT username, password FROM users")
+    signup_data = cur.fetchall()
+    cur.close()
+    flag = 0
+    for each_user_data in signup_data:
+        if username == each_user_data[0]:
+            if password == each_user_data[1]:
+                flag = 1
+                break
+    if flag == 0:
+        return jsonify({"success": None, "error": True})
 
     # TODO: If the username and password are correct, set the username in the session
+    if flag == 1:
+        session['username'] = username
 
-    return
+    return jsonify({"success": True, "error": None})
 
 
 # TODO: Create logout api
 # you should retrieve the username from the request, pop it from the session if it's in the session
 # then return a result
-@app.route("/logout", methods=["POST"])
+@app.route("/logout", methods=['GET', 'POST'])
 def logout():
-    return
+    if request.method == 'GET':
+        # check if user is in session
+        username = request.args.get("username")
+        if 'username' in session and username in session['username']:
+            session['username'] = None
+            return jsonify({"username": username, "error": None})
+        return jsonify({"username": None, "error": None})
+
 
 @app.route("/chat", methods=["POST"])
 def chat():
     # Get the inputs from the request
-    user_id = request.json["user_id"]
-    question = request.json["question"]
+    # username = request.json["user_id"]
+    question = request.json.get("input")
 
     # Use OpenAI's language generation API to generate a response
     response = openai.Completion.create(
@@ -103,6 +124,14 @@ def chat():
     response = response.replace("You: ", "")
 
     # TODO save the chat history into database
+    cur = mysql.connection.cursor()
+    # create a new column
+    cur.execute(f"alter table chat_table add {session['username']} LONGTEXT null;")
+    # insert the chat history for the new column
+    sql = f"INSERT INTO chat_table ({session['username']}) VALUES (%s)"
+    cur.execute(sql, (response))
+    mysql.connection.commit()
+    cur.close()
 
     # Return the response as JSON
     return jsonify({"response": response})
@@ -111,9 +140,21 @@ def chat():
 # TODO: Create chat_history API that returns chat history for the specified user
 @app.route("/chat_history", methods=["POST"])
 def chat_history():
-    return
+    cur = mysql.connection.cursor()
+    cur.execute(f"SELECT {session['username']} FROM chat_table")
+    chat_history = cur.fetchall()
+    cur.close()
+
+    return jsonify({"chat history": chat_history})
+
+
+
 
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='localhost')
+    app.run(debug=True, host='localhost',port=4444)
+
+
+
+
