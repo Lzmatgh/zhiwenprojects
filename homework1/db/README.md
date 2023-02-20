@@ -13,3 +13,10 @@ Imagine that you are building a ChatGPT app that allows users to ask questions a
 
 ## Answer:
 TODO: you need to add your sql query to each task here.
+create database chatgpt;
+use chatgpt;
+create table users (username VARCHAR(100),password VARCHAR(100),email VARCHAR(100));
+use chatgpt;
+create table chat_table(chat_column LONGTEXT);
+此外我还使用了DataGrip对数据库进行了一些操作。
+
