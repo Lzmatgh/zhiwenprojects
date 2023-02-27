@@ -25,7 +25,6 @@ const LoginPage = () => {
 
     // TODO: Send a request to the server to verify the username and password
 	fetch("http://127.0.0.1:4444/login", {
-	  method: "GET",
 	  method: "POST",
 	  headers: {
 	    "Content-Type": "application/json",
@@ -36,27 +35,22 @@ const LoginPage = () => {
 	    password
 	  })
 	})
-	  .then((res) => {
-	    if (!res.ok) {
-	      console.error('Response not OK:', res.status, res.statusText);
-	      throw new Error(res.statusText);
-	    }
-	    return res.json();
-	  })
-	  .then((data) => {
-	    if (data.error) {
-	      setError(data.error);
-	    } else {
-	      // Redirect the user to the chat page
-	      window.location.href = '/chat';
-	    }
-	  })
-	  .catch((err) => {
-	    setError("An error occurred while trying to sign up");
-	    console.error(err);
-	  });
-    // Redirect to chat page if logged in successfully
-  };
+	  .then(response => {
+	        if (!response.ok) {
+	          return response.json().then(error => {
+	            setError(error.message || 'Something went wrong.');
+	          });
+	        };
+	        // Save the username in local storage
+	        localStorage.setItem('username', username);
+	  
+	        // Redirect the user to the chat page
+	        window.location.href = '/chat';
+	      })
+	      .catch(error => {
+	        setError(error.message || 'Something went wrong.');
+	      });
+	    };
 
   return (
     <div className="login-page">
