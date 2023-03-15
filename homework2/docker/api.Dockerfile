@@ -5,7 +5,6 @@ FROM python:3.9
 WORKDIR /app
 
 # Copy the requirements.txt to the container
-# TODO: create the requirements.txt at your homework1/api
 COPY requirements.txt ./
 
 # Install the required dependencies
@@ -16,4 +15,5 @@ COPY . .
 
 # Specify the command to run when the container starts
 # TODO: finish the CMD here
+CMD ["python3", "app.py"]
 
